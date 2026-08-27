@@ -25,6 +25,7 @@ private:
 
     unsigned char v[16]; // registers
     unsigned char memory[MAX_MEMORY_SIZE]; // memory;
+    
 
     unsigned char pc; // program counter
     unsigned char sp; // stack pointer
@@ -34,6 +35,7 @@ private:
 
     unsigned short opcode;
     unsigned short stack[24];
+    
 
     unsigned short screen_data[SCREEN_WIDTH][SCREEN_WIDTH];
 
