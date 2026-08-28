@@ -25,7 +25,7 @@ private:
 
     unsigned char v[16]; // registers
     unsigned char memory[MAX_MEMORY_SIZE]; // memory;
-    
+    unsigned short I; // address pointer register.
 
     unsigned char pc; // program counter
     unsigned char sp; // stack pointer
