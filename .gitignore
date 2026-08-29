@@ -1,2 +1,6 @@
 
-roms/
+SDL3*/
+
+/roms/
+/build/
+vendored
