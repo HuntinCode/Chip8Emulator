@@ -1,4 +1,4 @@
-
+#include "Chip8.h"
 
 int main () {
 
