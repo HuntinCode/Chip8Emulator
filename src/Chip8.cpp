@@ -1,6 +1,7 @@
 #include "Chip8.h"
 #include <fstream>
 #include <iostream>
+#include <string>
 
 Chip8::Chip8() {
     reset();
@@ -23,11 +24,11 @@ return op;
 }
 
 void Chip8::load_rom(std::string file_name) {
-std::ifstream file(file_name, std::fstream::in | std::fstream::binary);
+std::ifstream file(file_name, std::ios::binary);
 unsigned short length = 0;
 unsigned char file_buffer[0xE00];
 
-    if (!file)
+    if (!file.is_open())
         std::cerr << "Failed to open file\n";
 
     file.seekg(0, std::ios_base::end);
@@ -36,15 +37,15 @@ unsigned char file_buffer[0xE00];
 
     file.read(reinterpret_cast<char *>(&file_buffer), length);
 
-    if (file) {
+    if (file.is_open()) {
 
-        std::cout << "File is loaded succesfully. Now loading into memory." << std::endl;
+        std::cout << "File is opened succesfully. Now loading into memory." << std::endl;
         for (int i = 0; i < length; i++)
             memory[pc + i] = file_buffer[i];
 
     } else {
 
-        std::cout << "File stopped loading at" << file.gcount() << " characters" << std::endl;
+        std::cout << "File stopped loading at " << file.gcount() << " characters" << std::endl;
     }
     
     file.close();
@@ -168,7 +169,20 @@ return;
 }
 
 void Chip8::opcodeE_group() {
-    
+unsigned char nibble = 0;
+
+    nibble = opcode & 0x000F;
+    switch (nibble) {
+        case 0xE:
+            opcodeEX9E();
+            break;
+        case 0x1:
+            opcodeEXA1();
+            break;
+        default:
+            break;
+    }
+return;
 }
 
 void Chip8::opcodeF_group() {
@@ -226,12 +240,19 @@ unsigned char Chip8::get_pressed_key() {
 unsigned ret_value = 0;
 
     for (int i = 0; i < 16; i++)
-        if (key_states[i] != 0) {
+        if (key_states[i] == true) {
             ret_value = i;
             break;
         }
 
 return ret_value;
+}
+
+void Chip8::set_key(unsigned char key, bool isSet) {
+
+        key_states[key] = isSet;
+
+return;
 }
 
 void Chip8::execute_op() {
@@ -291,4 +312,21 @@ unsigned char nibble = 0;
     }
 
 return; 
+}
+
+
+void Chip8::run() {
+    // loaded rom before.
+    opcode = get_next_opcode();
+    execute_op();
+}
+
+void Chip8::decrease_timers() {
+
+    if (d_timer > 0)
+        d_timer--;
+    
+    if (s_timer > 0)
+        s_timer--;
+return;
 }

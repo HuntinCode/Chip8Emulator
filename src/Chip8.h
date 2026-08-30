@@ -33,7 +33,7 @@ private:
     unsigned short stack[STACK_SIZE];
 
     unsigned short screen_data[SCREEN_WIDTH][SCREEN_WIDTH];
-    unsigned char key_states[16]{0};
+    unsigned char key_states[16]{false};
 
 public:
     Chip8();
@@ -54,8 +54,10 @@ public:
     void opcodeF_group();
 
     unsigned char get_pressed_key();
-
+    void set_key(unsigned char, bool);
     void execute_op();
+    void run();
+    void decrease_timers();
     
     void opcode0NNN();
     void opcode00E0();
