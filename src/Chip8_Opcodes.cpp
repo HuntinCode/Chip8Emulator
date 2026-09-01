@@ -3,12 +3,9 @@
 
 // jumps to a machine function.
 void Chip8::opcode0NNN() {
-unsigned short address = 0;
 
-    stack[sp] = pc;
-    address = extract_address();
-    pc = address;
-    sp++;
+    stack[sp++] = pc;
+    pc = extract_address();
 
 return;
 }
@@ -21,31 +18,25 @@ return;
 
 void Chip8::opcode00EE() {
     
-    pc = stack[sp];
+    pc = stack[--sp];
     stack[sp] = 0;
-    sp--;
 
 return;
 }
 
 // jumps to a defined address.
 void Chip8::opcode1NNN() {
-unsigned short address = 0;
 
-    address = extract_address();
-    pc = address;
+    pc = extract_address();
 
 return;
 }
 
 // calls a function at the designated address.
 void Chip8::opcode2NNN() {
-unsigned short address = 0;
-
-    stack[sp] = pc;
-    address = extract_address();
-    pc = address;
-    sp += 1;
+    
+    stack[sp++] = pc;
+    pc = extract_address();
 
 return;
 }
@@ -158,8 +149,8 @@ int xVal = 0;
 int yVal = 0;
 
     reg = extract_reg_identifer();
-    xVal = reg.x;
-    yVal = reg.y;
+    xVal = v[reg.x];
+    yVal = v[reg.y];
 
     v[0xf] = 0;
 
@@ -174,11 +165,16 @@ return;
 // subtracts vY from Vx and if theres an underflow, sets the flag register to 0. Otherwise the flag register is 1.
 void Chip8::opcode8XY5() {
 RegisterIdentifiers reg;
+int xVal = 0;
+int yVal = 0;
 
     reg = extract_reg_identifer();
+    xVal = reg.x;
+    yVal = reg.y;
+
     v[0xf] = 1;
 
-    if (v[reg.x] >= v[reg.y]) 
+    if (v[reg.y] > v[reg.x]) 
         v[0xf] = 0;
     
     v[reg.x] -= v[reg.y];
@@ -217,7 +213,7 @@ RegisterIdentifiers reg;
 unsigned char temp = 0;
 
     reg = extract_reg_identifer();
-    temp = v[reg.x] & 0xF000;
+    temp = (v[reg.x] & 0xF000) >> 12;
     v[reg.x] <<= 1;
 
     if (temp)
@@ -241,10 +237,8 @@ return;
 
 // sets address register to NNN
 void Chip8::opcodeANNN() {
-unsigned short address = 0;
 
-    address = extract_address();
-    I = address;
+    I = extract_address();
     
 return;
 }
@@ -410,7 +404,7 @@ unsigned char nibble = 0;
 
     reg = extract_reg_identifer();
     nibble = v[reg.x] & 0x000F;
-    I = nibble;
+    I = memory[nibble * 5];
  
 return;
 }
@@ -448,6 +442,8 @@ RegisterIdentifiers reg;
         memory[I + i] = v[i];
     }
 
+    I += reg.x + 1;
+
 return;
 }
 
@@ -459,6 +455,8 @@ RegisterIdentifiers reg;
 
     for (int i = 0; i <= reg.x; i++)
         v[i] = memory[I + i];
+
+    I += reg.x + 1;
 
 return;
 }

@@ -8,48 +8,46 @@ Chip8::Chip8() {
 }
 
 /* 
-Returns the opcode from memory, and increments the program counter by 2.
+Returns the current opcode from memory, and increments the program counter by 2.
 Calling this again will get you the next opcode. 
 */
 unsigned short Chip8::get_next_opcode() {
-unsigned short op = 0;
+unsigned short current_opcode = 0;
 
-    op = memory[pc];
-    op << 8;
-    op |= memory[pc + 1];
+   std::cout << "Current value of program counter: " << pc << std::endl;
+   current_opcode = memory[pc];
+   current_opcode <<= 8;
 
-    pc += 2;
+   current_opcode |= memory[pc + 1];
 
-return op;
+return current_opcode;
 }
 
 void Chip8::load_rom(std::string file_name) {
-std::ifstream file(file_name, std::ios::binary);
+std::ifstream file;
 unsigned short length = 0;
-unsigned char file_buffer[0xE00];
+unsigned char *buffer = nullptr;
 
-    if (!file.is_open())
-        std::cerr << "Failed to open file\n";
+    file.open(file_name, std::ios::binary);
 
-    file.seekg(0, std::ios_base::end);
-    length = file.tellg();
-    file.seekg(0, std::ios_base::beg);
-
-    file.read(reinterpret_cast<char *>(&file_buffer), length);
-
-    if (file.is_open()) {
-
-        std::cout << "File is opened succesfully. Now loading into memory." << std::endl;
-        for (int i = 0; i < length; i++)
-            memory[pc + i] = file_buffer[i];
-
-    } else {
-
-        std::cout << "File stopped loading at " << file.gcount() << " characters" << std::endl;
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << file_name << std::endl;
+        return;
     }
-    
+
+    file.seekg(0, std::ios::end);
+    length = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    buffer = new unsigned char[length];
+
+    file.read(reinterpret_cast<char*>(buffer), length);
     file.close();
 
+    for (int i = 0; i < length; i++)
+        memory[pc + i] = buffer[i];
+
+    delete [] buffer;
 return;
 }
 
@@ -70,7 +68,7 @@ return;
 
 void Chip8::clear_display() {
     for (int i = 0; i < SCREEN_LENGTH; i++) 
-        for (int j = 0; i < SCREEN_WIDTH; i++)
+        for (int j = 0; j < SCREEN_WIDTH; j++)
             screen_data[i][j] = 0;
 
 return;
@@ -101,11 +99,8 @@ unsigned short Chip8::extract_address() {
 RegisterIdentifiers Chip8::extract_reg_identifer() {
 RegisterIdentifiers extraction; 
 
-    extraction.x = opcode & 0x0F00;
-    extraction.x >>= 8;
-
-    extraction.y = opcode & 0x00F0;
-    extraction.y >>= 4;
+    extraction.x = (opcode & 0x0F00) >> 8;
+    extraction.y = (opcode & 0x00F0) >> 4;
 
 return extraction;
 }
@@ -316,7 +311,6 @@ return;
 
 
 void Chip8::run() {
-    // loaded rom before.
     opcode = get_next_opcode();
     execute_op();
 }
@@ -330,3 +324,4 @@ void Chip8::decrease_timers() {
         s_timer--;
 return;
 }
+

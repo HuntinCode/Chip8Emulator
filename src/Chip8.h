@@ -4,7 +4,7 @@
 #include <iosfwd>
 
 const unsigned short MAX_MEMORY_SIZE = 0x1000;
-const unsigned char STACK_SIZE = 24;
+const unsigned char STACK_SIZE = 0;
 const unsigned char SCREEN_WIDTH = 64;
 const unsigned char SCREEN_LENGTH = 32;
 const unsigned char MAX_REGISTERS = 16;
@@ -32,32 +32,22 @@ private:
     unsigned short opcode;
     unsigned short stack[STACK_SIZE];
 
-    unsigned short screen_data[SCREEN_WIDTH][SCREEN_WIDTH];
     unsigned char key_states[16]{false};
-
-public:
-    Chip8();
-
+    
     unsigned short get_next_opcode();
-    void load_rom(std::string);
     void reset();
     void clear_display();
     void clear_mem();
     void clear_stack();
-
-    unsigned short extract_address();
-    RegisterIdentifiers extract_reg_identifer();
-
+    
     void opcode0_group();
     void opcode8_group();
     void opcodeE_group();
     void opcodeF_group();
 
-    unsigned char get_pressed_key();
-    void set_key(unsigned char, bool);
+    unsigned short extract_address();
+    RegisterIdentifiers extract_reg_identifer();
     void execute_op();
-    void run();
-    void decrease_timers();
     
     void opcode0NNN();
     void opcode00E0();
@@ -94,6 +84,20 @@ public:
     void opcodeFX33();
     void opcodeFX55();
     void opcodeFX65();
+
+public:
+    
+    unsigned short screen_data[SCREEN_LENGTH][SCREEN_WIDTH];
+    
+    Chip8();
+    
+    unsigned char get_pressed_key();
+    
+    void set_key(unsigned char, bool);
+    void run();
+    void decrease_timers();
+    void load_rom(std::string);
+    
 };
 
 #endif
