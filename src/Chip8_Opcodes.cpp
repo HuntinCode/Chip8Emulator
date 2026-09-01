@@ -424,7 +424,7 @@ int value = 0;
 
     hundreds = value / 100;
     tens = (value / 10) % 10;
-    ones = value % 10;
+    ones = (value % 100) % 10;
 
     memory[I] = hundreds;
     memory[I + 1] = tens;
@@ -443,7 +443,6 @@ RegisterIdentifiers reg;
         memory[I + i] = v[i];
     }
 
-    I += reg.x + 1;
 
 return;
 }
@@ -457,7 +456,7 @@ RegisterIdentifiers reg;
     for (int i = 0; i <= reg.x; i++)
         v[i] = memory[I + i];
 
-    I += reg.x + 1;
+  
 
 return;
 }

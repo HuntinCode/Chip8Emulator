@@ -194,6 +194,9 @@ void Chip8::opcodeF_group() {
 unsigned char group_nibble = 0;
 unsigned char id_nibble = 0;
 
+    group_nibble = (opcode & 0x00F0) >> 4;
+    id_nibble = opcode & 0x000F;
+
     switch (group_nibble) {
         case 0x0:
             switch (id_nibble) {
@@ -264,7 +267,6 @@ void Chip8::execute_op() {
 unsigned char nibble = 0; 
 
     nibble = (opcode & 0xF000) >> 12;
-    std::cout << static_cast<int>(nibble) << "\n";
     
     switch (nibble) {
         case 0x0:
@@ -324,7 +326,6 @@ return;
 void Chip8::run() {
     opcode = get_next_opcode();
     execute_op();
-    std::cout << "Program counter is at: " << pc << std::endl;
 }
 
 void Chip8::decrease_timers() {

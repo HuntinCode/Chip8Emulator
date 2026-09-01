@@ -23,6 +23,7 @@ SDL_FRect rect;
                 rect.x = x * scaler;
                 rect.y = y * scaler;
                 SDL_RenderFillRect(renderer, &rect);
+             
             }
     SDL_RenderPresent(renderer);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -88,7 +89,7 @@ int number_opcodes = 10;
 
 
     chip = new Chip8;
-    chip->load_rom("roms/1-chip8-logo.ch8");
+    chip->load_rom("roms/3-corax+.ch8");
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("Error in initalization: %s", SDL_GetError());
@@ -105,8 +106,6 @@ int number_opcodes = 10;
     SDL_RenderClear(render);
     SDL_RenderPresent(render);
 
-
-
     while (is_running) {
 
             time_elapased = SDL_GetTicks();
@@ -116,22 +115,21 @@ int number_opcodes = 10;
                     is_running = false;
             }
             
-    // do something here.
+  
             frame_time = SDL_GetTicks() - time_elapased;
             if (frame_delay > frame_time) {
                  for (int i = 0; i < number_opcodes; i++) {}
                         chip->run();
 
                     draw_frame(chip, render);
-                    chip->decrease_timers();
                     SDL_Delay(frame_delay - frame_time);
                 }
 
     }
 
 
-
-    
+    SDL_DestroyRenderer(render);
+    SDL_DestroyWindow(window);
     SDL_Quit();
     delete chip;
     
