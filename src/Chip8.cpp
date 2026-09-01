@@ -5,6 +5,7 @@
 
 Chip8::Chip8() {
     reset();
+    load_font_set();
 }
 
 /* 
@@ -14,11 +15,12 @@ Calling this again will get you the next opcode.
 unsigned short Chip8::get_next_opcode() {
 unsigned short current_opcode = 0;
 
-   std::cout << "Current value of program counter: " << pc << std::endl;
    current_opcode = memory[pc];
    current_opcode <<= 8;
 
    current_opcode |= memory[pc + 1];
+
+   pc += 2;
 
 return current_opcode;
 }
@@ -62,6 +64,7 @@ void Chip8::reset() {
     clear_display();
     clear_mem();
     clear_stack();
+    
 
 return;
 }
@@ -84,6 +87,13 @@ return;
 void Chip8::clear_stack() {
     for (int i = 0; i < STACK_SIZE; i++)
         stack[i] = 0;
+
+return;
+}
+
+void Chip8::load_font_set() {
+    for (int i = 0; i < 80; i++)
+        memory[i] = chip8_fontset[i];
 
 return;
 }
@@ -254,6 +264,7 @@ void Chip8::execute_op() {
 unsigned char nibble = 0; 
 
     nibble = (opcode & 0xF000) >> 12;
+    std::cout << static_cast<int>(nibble) << "\n";
     
     switch (nibble) {
         case 0x0:
@@ -313,6 +324,7 @@ return;
 void Chip8::run() {
     opcode = get_next_opcode();
     execute_op();
+    std::cout << "Program counter is at: " << pc << std::endl;
 }
 
 void Chip8::decrease_timers() {

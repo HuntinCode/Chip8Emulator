@@ -8,15 +8,24 @@ void draw_frame(Chip8 *, SDL_Renderer *);
 
 void draw_frame(Chip8 *cpu, SDL_Renderer *renderer) {
 bool success = 0;
+unsigned char scaler = 10;
+SDL_FRect rect;
+
+    rect.w = scaler / 2;
+    rect.h = scaler / 2;
 
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 
     for (int y = 0; y < SCREEN_LENGTH; y++)
-        for (int x = 0; x < SCREEN_LENGTH; x++)
-            SDL_RenderPoint(renderer, x, y);
-        
+        for (int x = 0; x < SCREEN_WIDTH; x++)
+             if (cpu->screen_data[y][x] == 1) {
+                rect.x = x * scaler;
+                rect.y = y * scaler;
+                SDL_RenderFillRect(renderer, &rect);
+            }
     SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
 return;
 }
@@ -79,7 +88,7 @@ int number_opcodes = 10;
 
 
     chip = new Chip8;
-    chip->load_rom("/home/mrzombie/Projects/Chip8Emu/roms/1-chip8-logo.8o");
+    chip->load_rom("roms/1-chip8-logo.ch8");
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("Error in initalization: %s", SDL_GetError());
@@ -112,10 +121,11 @@ int number_opcodes = 10;
             if (frame_delay > frame_time) {
                  for (int i = 0; i < number_opcodes; i++) {}
                         chip->run();
-                   
-            
-                SDL_Delay(frame_delay - frame_time);
-            }
+
+                    draw_frame(chip, render);
+                    chip->decrease_timers();
+                    SDL_Delay(frame_delay - frame_time);
+                }
 
     }
 

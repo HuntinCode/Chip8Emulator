@@ -1,5 +1,6 @@
 #include "Chip8.h"
 #include <cstdlib>
+#include <iostream>
 
 // jumps to a machine function.
 void Chip8::opcode0NNN() {
@@ -278,13 +279,13 @@ unsigned char x = 0;
 unsigned char y = 0;
 
     reg = extract_reg_identifer();
-    x_cord = v[reg.x];
-    y_cord = v[reg.y];
     height = 0x000F & opcode;
+    x_cord = v[reg.x] % 64;
+    y_cord = v[reg.y] % 32;
 
     v[0xF] = 0;
 
-    for (int yline = 0; yline < height; y++) {
+    for (int yline = 0; yline < height; yline++) {
         
         data = memory[I + yline];
         x_pixel_line = 7;
@@ -294,14 +295,14 @@ unsigned char y = 0;
 
             mask = 1 << x_pixel_line;
             if (data & mask) {
+                
+                 x = (x_cord + x_pixel);
+                 y = (y_cord + yline);
 
-                x = x_cord + x_pixel;
-                y = y_cord + yline;
-
-                if (screen_data[x][y] == 1)
+                if (screen_data[y][x] == 1)
                     v[0xF] = 1;
                 
-                screen_data[x][y] ^= 1;
+                screen_data[y][x] ^= 1;
 
             }
 
