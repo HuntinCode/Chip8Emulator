@@ -4,16 +4,12 @@
 #include <iosfwd>
 
 const unsigned short MAX_MEMORY_SIZE = 0x1000;
-const unsigned char STACK_SIZE = 0;
+const unsigned char STACK_SIZE = 24;
 const unsigned short SCREEN_WIDTH = 64;
 const unsigned short SCREEN_LENGTH = 32;
 const unsigned char MAX_REGISTERS = 16;
 
-struct RegisterIdentifiers
-{
-    unsigned char x;
-    unsigned char y;
-};
+
 
 class Chip8
 {
@@ -22,6 +18,10 @@ private:
     unsigned char v[MAX_REGISTERS];        // registers
     unsigned char memory[MAX_MEMORY_SIZE]; // memory;
     unsigned short I;                      // address pointer register.
+
+    unsigned short NNN_address;
+    unsigned char X_register;
+    unsigned char Y_register;
 
     unsigned short pc; // program counter
     unsigned char sp;  // stack pointer
@@ -32,7 +32,7 @@ private:
     unsigned short opcode;
     unsigned short stack[STACK_SIZE];
 
-    unsigned char key_states[16]{false};
+    bool key_states[0x10] = {false};
 
     unsigned char chip8_fontset[80] = { 
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -54,11 +54,12 @@ private:
 };
 
     
-    unsigned short get_next_opcode();
+    void get_next_opcode();
     void reset();
     void clear_display();
     void clear_mem();
     void clear_stack();
+    void clear_keystates();
     void load_font_set();
     
     void opcode0_group();
@@ -66,8 +67,7 @@ private:
     void opcodeE_group();
     void opcodeF_group();
 
-    unsigned short extract_address();
-    RegisterIdentifiers extract_reg_identifer();
+  
     void execute_op();
     
     void opcode0NNN();

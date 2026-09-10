@@ -2,15 +2,6 @@
 #include <cstdlib>
 #include <iostream>
 
-// jumps to a machine function.
-void Chip8::opcode0NNN() {
-
-    stack[sp++] = pc;
-    pc = extract_address();
-
-return;
-}
-
 // resets the screen data.
 void Chip8::opcode00E0() {
     clear_display();
@@ -28,16 +19,16 @@ return;
 // jumps to a defined address.
 void Chip8::opcode1NNN() {
 
-    pc = extract_address();
+    pc = NNN_address;
 
 return;
 }
 
 // calls a function at the designated address.
 void Chip8::opcode2NNN() {
-    
+
     stack[sp++] = pc;
-    pc = extract_address();
+    pc = NNN_address;
 
 return;
 }
@@ -45,12 +36,10 @@ return;
 // compares the value in V[x] register, with NN. If, they're equal, then skip the next instruction otherwise proceed.
 void Chip8::opcode3XNN() {
 unsigned char byte = 0;
-unsigned char xReg = 0;
 
     byte = opcode & 0x00FF;
-    xReg = (opcode & 0x0F00) >> 8;
 
-    if (v[xReg] == byte)
+    if (v[X_register] == byte)
         pc += 2;
 
 return;
@@ -59,12 +48,10 @@ return;
 // Compares the value of register X with NN. If they're not equal to each other it will skip the next instruction.
 void Chip8::opcode4XNN() {
 unsigned char byte = 0;
-unsigned char xReg = 0;
 
     byte = opcode & 0x00FF;
-    xReg = (opcode & 0x0F00) >> 8;
-
-    if (v[xReg] != byte)
+    
+    if (v[X_register] != byte)
         pc += 2;
 
 return;   
@@ -72,10 +59,8 @@ return;
 
 // Compares the value of register X and Y. If they're equal, it skips the next instruction.
 void Chip8::opcode5XY0() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    if (v[reg.x] == v[reg.y])
+    if (v[X_register] == v[Y_register])
         pc += 2;
 
 return;
@@ -84,11 +69,9 @@ return;
 // Sets the value of vX register to the byte NN.
 void Chip8::opcode6XNN() {
 unsigned char byte = 0;
-unsigned char xReg = 0;
 
     byte = opcode & 0x00FF;
-    xReg = (opcode & 0x0F00) >> 8;
-    v[xReg] = byte;
+    v[X_register] = byte;
    
 return;
 }
@@ -97,140 +80,129 @@ return;
 void Chip8::opcode7XNN() {
 unsigned char xReg = 0;
 
-    xReg = (opcode & 0x0F00) >> 8;
-    v[xReg] += (opcode & 0x00FF);
+   
+    v[X_register] += (opcode & 0x00FF);
    
 return;
 }
 
 // sets the value of vX register to vY register. 
 void Chip8::opcode8XY0() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    v[reg.x] = v[reg.y];
+    v[X_register] = v[Y_register];
 
 return;
 }
 
 // Sets the value of vX to vX OR vY using bitwise operation.
 void Chip8::opcode8XY1() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    v[reg.x] |= v[reg.y];
+    v[X_register] |= v[Y_register];
+    v[0xF] = 0;
 
 return;
 }
 
 // Sets the value of vX to vX and vY using bitwise operation.
 void Chip8::opcode8XY2() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    v[reg.x] &= v[reg.y];
+    v[X_register] &= v[Y_register];
+    v[0xF] = 0;
     
 return;
 }
 
 // Sets vX register to value of vX XOR vY
 void Chip8::opcode8XY3() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    v[reg.x] ^= v[reg.y];
+    v[X_register] ^= v[Y_register];
+    v[0xF] = 0;
     
 return;
 }
 
 // adds Vy to Vx and if theres an overflow, sets the vF flag to 1. Set to 0 if no overflow.
 void Chip8::opcode8XY4() {
-RegisterIdentifiers reg;
 int xVal = 0;
 int yVal = 0;
 
-    reg = extract_reg_identifer();
-    xVal = v[reg.x];
-    yVal = v[reg.y];
+    xVal = v[X_register];
+    yVal = v[Y_register];
 
-    v[0xf] = 0;
+    v[X_register] += v[Y_register];
+    v[0xF] = 0;
 
     if ((xVal + yVal) > 255) 
-        v[0xf] = 1;
-
-    v[reg.x] += v[reg.y];
+        v[0xF] = 1;
 
 return;
 }
 
 // subtracts vY from Vx and if theres an underflow, sets the flag register to 0. Otherwise the flag register is 1.
 void Chip8::opcode8XY5() {
-RegisterIdentifiers reg;
 int xVal = 0;
 int yVal = 0;
 
-    reg = extract_reg_identifer();
-    xVal = reg.x;
-    yVal = reg.y;
+    xVal = v[X_register];
+    yVal = v[Y_register];
 
-    v[0xf] = 1;
+    v[X_register] -= v[Y_register];
 
-    if (v[reg.y] > v[reg.x]) 
-        v[0xf] = 0;
+    if (xVal >= yVal) 
+        v[0xF] = 1;
+    else
+        v[0xF] = 0;
     
-    v[reg.x] -= v[reg.y];
 
 return;
 }
 
 // Shifts vX to the right by 1, but before that it stores the least significant bit of vX into vF
 void Chip8::opcode8XY6() {
-RegisterIdentifiers reg;
+unsigned char lsb = 0;
 
-    reg = extract_reg_identifer();
-    v[0xF] = v[reg.x] & 0x000F;
-    v[reg.x] >>= 1;
+
+    lsb = v[Y_register] & 1;
+    v[X_register] = v[Y_register] >> 1;
+    v[0xF] = lsb;
 
 return;
 }
 
 // sets vX to Vy - Vx. VF is set to 0 when when theres a underflow.
 void Chip8::opcode8XY7() {
-RegisterIdentifiers reg;
+int xVal = 0;
+int yVal = 0;
 
-    reg = extract_reg_identifer();
-    v[0xf] = 1;
 
-    if (v[reg.y] >= v[reg.x]) 
-        v[reg.x] = 0;
+    xVal = v[X_register];
+    yVal = v[Y_register];
+    
+    v[X_register] = v[Y_register] - v[X_register];
 
-    v[reg.x] = v[reg.y] - v[reg.x];
-
+    if (yVal >= xVal) 
+        v[0xF] = 1;
+    else
+        v[0xF] = 0;
+        
 return;
 }
 
 void Chip8::opcode8XYE() {
-RegisterIdentifiers reg;
-unsigned char temp = 0;
+unsigned char msb = 0;
 
-    reg = extract_reg_identifer();
-    temp = (v[reg.x] & 0xF000) >> 12;
-    v[reg.x] <<= 1;
 
-    if (temp)
-        v[0xF] = 1;
-    else
-        v[0xF] = 0;
-  
+    msb = (v[Y_register] & 0x80) >> 7; // 0x80 is the 8th bit in a byte e.g 10000000, works well here since 8 bit register.
+    v[X_register] = v[Y_register] << 1;
+    v[0xF] = (msb & 0x1);
+
 return;
 }
 
 // compare value of vX and vY if it's not equal, skip the next instruction.
 void Chip8::opcode9XY0() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    if (v[reg.x] != v[reg.y])
+    if (v[X_register] != v[Y_register])
         pc += 2;
     
 return; 
@@ -239,17 +211,15 @@ return;
 // sets address register to NNN
 void Chip8::opcodeANNN() {
 
-    I = extract_address();
+    I = NNN_address;
     
 return;
 }
 
 // Jumps the address NNN + v[0]
 void Chip8::opcodeBNNN() {
-unsigned short address = 0;
-    
-    address = extract_address();
-    pc = v[0] + address;
+
+    pc = v[0] + NNN_address;
 
 return;
 }
@@ -257,17 +227,14 @@ return;
 // sets vX to result of a bitwise AND operation of a random number and NN
 void Chip8::opcodeCXNN() {
 unsigned char random = std::rand() % 256;
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    v[reg.x] = random & (opcode & 0x00FF);
+    v[X_register] = random & (opcode & 0x00FF);
 
 return;
 }
 
 // Draws a sprite at a given coordinate X, Y, 8 pixels wide of a length N.
 void Chip8::opcodeDXYN() {
-RegisterIdentifiers reg;
 unsigned char height = 0;
 unsigned char x_cord  = 0;
 unsigned char y_cord = 0;
@@ -278,26 +245,29 @@ unsigned char mask = 0;
 unsigned char x = 0;
 unsigned char y = 0;
 
-    reg = extract_reg_identifer();
+  
     height = 0x000F & opcode;
-    x_cord = v[reg.x] % 64;
-    y_cord = v[reg.y] % 32;
+    x_cord = v[X_register] % 64;
+    y_cord = v[Y_register] % 32;
 
     v[0xF] = 0;
 
     for (int yline = 0; yline < height; yline++) {
+        
         
         data = memory[I + yline];
         x_pixel_line = 7;
         x_pixel = 0;
 
         for (x_pixel = 0; x_pixel < 8; x_pixel++, x_pixel_line--) {
+            if (x_cord > 64 || y_cord > 32 )
+                break;
 
             mask = 1 << x_pixel_line;
             if (data & mask) {
                 
-                 x = (x_cord + x_pixel);
-                 y = (y_cord + yline);
+                 x = (x_cord + x_pixel) % 64;
+                 y = (y_cord + yline) % 32;
 
                 if (screen_data[y][x] == 1)
                     v[0xF] = 1;
@@ -313,16 +283,13 @@ unsigned char y = 0;
 return;
 }
 
-
 // If the value of vX matches the pressed key, it skips the next instruction
 void Chip8::opcodeEX9E() {
-unsigned char key = 0;
-unsigned char xReg = 0;
+unsigned char lowestNibble = 0;
 
-    key = get_pressed_key();
-    xReg = (opcode & 0x0F00) >> 8;
-
-    if (key == v[xReg])
+    lowestNibble = v[X_register] & 0x000F;
+    
+    if (key_states[lowestNibble])
         pc += 2;
 
 return;
@@ -330,13 +297,12 @@ return;
 
 // If the value of vX doesn't match the pressed key, it skips the next instruction.
 void Chip8::opcodeEXA1() {
-unsigned char key = 0;
-unsigned char xReg = 0;
-    
-    key = get_pressed_key();
-    xReg = (opcode & 0x0F00) >> 8;
+unsigned char lowest_nibble = 0;
 
-    if (key != v[xReg])
+    lowest_nibble = v[X_register] & 0xF;
+    
+
+    if (!key_states[lowest_nibble])
         pc += 2;
 
 return;
@@ -344,67 +310,57 @@ return;
 
 // Sets the vX to the value of the delay timer
 void Chip8::opcodeFX07() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    v[reg.x] = d_timer;
+    v[X_register] = d_timer;
    
 return;
 }
 
 // waits for key press, haults all instructions until key press but allows sound, delay timers to continue.
 void Chip8::opcodeFX0A() {
-unsigned key = 0;
-unsigned xReg = 0;
-    
-    xReg = (opcode & 0x0F00) >> 8;
-    key = get_pressed_key();
+unsigned char pressedKey = 0;
+bool key_not_pressed = true;
 
-    if (key)
-        v[xReg] = key;
-    else
-        pc -= 2; // repeats this instruction until key pressed.
+    pressedKey = get_pressed_key();
+  
+    if (pressedKey != 255 )
+        key_not_pressed = false;
+
+    if (key_not_pressed)
+        pc -= 2;
 
 return;
 }
 
 // sets delay timer to vX
 void Chip8::opcodeFX15() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    d_timer = v[reg.x];
+    d_timer = v[X_register];
     
 return;
 }
 
 // sets sound timer to vX
 void Chip8::opcodeFX18() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    s_timer = v[reg.x];
+    s_timer = v[X_register];
     
 return;
 }
 
 // adds vX to I address.
 void Chip8::opcodeFX1E() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-    I += v[reg.x];
+    I += v[X_register];
     
 return;
 }
 
 // sets the address I to the location of sprite character vX.
 void Chip8::opcodeFX29() {
-RegisterIdentifiers reg;
 unsigned char nibble = 0;
 
-    reg = extract_reg_identifer();
-    nibble = v[reg.x] & 0x000F;
+    nibble = v[X_register] & 0x000F;
     I = memory[nibble * 5];
  
 return;
@@ -412,15 +368,13 @@ return;
 
 // stores the binary-coded representation of vX starting at memory location I
 void Chip8::opcodeFX33() {
-RegisterIdentifiers reg;
 int hundreds = 0;
 int tens = 0;
 int ones = 0;
 int value = 0;
 
-    reg = extract_reg_identifer();
 
-    value = v[reg.x];
+    value = v[X_register];
 
     hundreds = value / 100;
     tens = (value / 10) % 10;
@@ -435,13 +389,13 @@ return;
 
 // Stores values from v0 to vX to in memory, starting at addres I
 void Chip8::opcodeFX55() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
 
-    for (int i = 0; i <= reg.x; i++) {
+    for (int i = 0; i <= X_register; i++) {
         memory[I + i] = v[i];
     }
+
+    I += X_register + 1;
 
 
 return;
@@ -449,14 +403,11 @@ return;
 
 // Fills v0 to vX with values from memory, starting at address I
 void Chip8::opcodeFX65() {
-RegisterIdentifiers reg;
 
-    reg = extract_reg_identifer();
-
-    for (int i = 0; i <= reg.x; i++)
+    for (int i = 0; i <= X_register; i++)
         v[i] = memory[I + i];
 
-  
+    I += X_register + 1;
 
 return;
 }
