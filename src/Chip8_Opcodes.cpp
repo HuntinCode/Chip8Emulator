@@ -10,8 +10,8 @@ return;
 
 void Chip8::opcode00EE() {
     
-    pc = stack[--sp];
-    stack[sp] = 0;
+    program_counter = stack[--stack_pointer];
+    stack[stack_pointer] = 0;
 
 return;
 }
@@ -19,7 +19,7 @@ return;
 // jumps to a defined address.
 void Chip8::opcode1NNN() {
 
-    pc = NNN_address;
+    program_counter = get_NNN();
 
 return;
 }
@@ -27,32 +27,28 @@ return;
 // calls a function at the designated address.
 void Chip8::opcode2NNN() {
 
-    stack[sp++] = pc;
-    pc = NNN_address;
+    stack[stack_pointer++] = program_counter;
+    program_counter = get_NNN();
 
 return;
 }
 
-// compares the value in V[x] register, with NN. If, they're equal, then skip the next instruction otherwise proceed.
+// compares the value in v_register[x] register, with NN. If, they're equal, then skip the next instruction otherwise proceed.
 void Chip8::opcode3XNN() {
-unsigned char byte = 0;
 
-    byte = opcode & 0x00FF;
 
-    if (v[X_register] == byte)
-        pc += 2;
+    if (v_register[get_X()] == get_NN())
+        program_counter += 2;
 
 return;
 }
 
 // Compares the value of register X with NN. If they're not equal to each other it will skip the next instruction.
 void Chip8::opcode4XNN() {
-unsigned char byte = 0;
 
-    byte = opcode & 0x00FF;
     
-    if (v[X_register] != byte)
-        pc += 2;
+    if (v_register[get_X()] != get_NN())
+        program_counter += 2;
 
 return;   
 }
@@ -60,18 +56,16 @@ return;
 // Compares the value of register X and Y. If they're equal, it skips the next instruction.
 void Chip8::opcode5XY0() {
 
-    if (v[X_register] == v[Y_register])
-        pc += 2;
+    if (v_register[get_X()] == v_register[get_Y()])
+        program_counter += 2;
 
 return;
 }
 
 // Sets the value of vX register to the byte NN.
 void Chip8::opcode6XNN() {
-unsigned char byte = 0;
 
-    byte = opcode & 0x00FF;
-    v[X_register] = byte;
+    v_register[get_X()] = get_NN();
    
 return;
 }
@@ -80,8 +74,7 @@ return;
 void Chip8::opcode7XNN() {
 unsigned char xReg = 0;
 
-   
-    v[X_register] += (opcode & 0x00FF);
+    v_register[get_X()] += get_NN();
    
 return;
 }
@@ -89,7 +82,7 @@ return;
 // sets the value of vX register to vY register. 
 void Chip8::opcode8XY0() {
 
-    v[X_register] = v[Y_register];
+    v_register[get_X()] = v_register[get_Y()];
 
 return;
 }
@@ -97,8 +90,8 @@ return;
 // Sets the value of vX to vX OR vY using bitwise operation.
 void Chip8::opcode8XY1() {
 
-    v[X_register] |= v[Y_register];
-    v[0xF] = 0;
+    v_register[get_X()] |= v_register[get_Y()];
+    v_register[0xF] = 0;
 
 return;
 }
@@ -106,8 +99,8 @@ return;
 // Sets the value of vX to vX and vY using bitwise operation.
 void Chip8::opcode8XY2() {
 
-    v[X_register] &= v[Y_register];
-    v[0xF] = 0;
+    v_register[get_X()] &= v_register[get_Y()];
+    v_register[0xF] = 0;
     
 return;
 }
@@ -115,8 +108,8 @@ return;
 // Sets vX register to value of vX XOR vY
 void Chip8::opcode8XY3() {
 
-    v[X_register] ^= v[Y_register];
-    v[0xF] = 0;
+    v_register[get_X()] ^= v_register[get_Y()];
+    v_register[0xF] = 0;
     
 return;
 }
@@ -126,14 +119,14 @@ void Chip8::opcode8XY4() {
 int xVal = 0;
 int yVal = 0;
 
-    xVal = v[X_register];
-    yVal = v[Y_register];
+    xVal = v_register[get_X()];
+    yVal = v_register[get_Y()];
 
-    v[X_register] += v[Y_register];
-    v[0xF] = 0;
+    v_register[get_X()] += v_register[get_Y()];
+    v_register[0xF] = 0;
 
     if ((xVal + yVal) > 255) 
-        v[0xF] = 1;
+        v_register[0xF] = 1;
 
 return;
 }
@@ -143,15 +136,15 @@ void Chip8::opcode8XY5() {
 int xVal = 0;
 int yVal = 0;
 
-    xVal = v[X_register];
-    yVal = v[Y_register];
+    xVal = v_register[get_X()];
+    yVal = v_register[get_Y()];
 
-    v[X_register] -= v[Y_register];
+    v_register[get_X()] -= v_register[get_Y()];
 
     if (xVal >= yVal) 
-        v[0xF] = 1;
+        v_register[0xF] = 1;
     else
-        v[0xF] = 0;
+        v_register[0xF] = 0;
     
 
 return;
@@ -162,9 +155,9 @@ void Chip8::opcode8XY6() {
 unsigned char lsb = 0;
 
 
-    lsb = v[Y_register] & 1;
-    v[X_register] = v[Y_register] >> 1;
-    v[0xF] = lsb;
+    lsb = v_register[get_Y()] & 1;
+    v_register[get_X()] = v_register[get_Y()] >> 1;
+    v_register[0xF] = lsb;
 
 return;
 }
@@ -175,15 +168,15 @@ int xVal = 0;
 int yVal = 0;
 
 
-    xVal = v[X_register];
-    yVal = v[Y_register];
+    xVal = v_register[get_X()];
+    yVal = v_register[get_Y()];
     
-    v[X_register] = v[Y_register] - v[X_register];
+    v_register[get_X()] = v_register[get_Y()] - v_register[get_X()];
 
     if (yVal >= xVal) 
-        v[0xF] = 1;
+        v_register[0xF] = 1;
     else
-        v[0xF] = 0;
+        v_register[0xF] = 0;
         
 return;
 }
@@ -191,10 +184,9 @@ return;
 void Chip8::opcode8XYE() {
 unsigned char msb = 0;
 
-
-    msb = (v[Y_register] & 0x80) >> 7; // 0x80 is the 8th bit in a byte e.g 10000000, works well here since 8 bit register.
-    v[X_register] = v[Y_register] << 1;
-    v[0xF] = (msb & 0x1);
+    msb = (v_register[get_Y()] & 0x80) >> 7; // 0x80 is the 8th bit in a byte e.g 10000000, works well here since 8 bit register.
+    v_register[get_X()] = v_register[get_Y()] << 1;
+    v_register[0xF] = (msb & 0x1);
 
 return;
 }
@@ -202,8 +194,8 @@ return;
 // compare value of vX and vY if it's not equal, skip the next instruction.
 void Chip8::opcode9XY0() {
 
-    if (v[X_register] != v[Y_register])
-        pc += 2;
+    if (v_register[get_X()] != v_register[get_Y()])
+        program_counter += 2;
     
 return; 
 }
@@ -211,15 +203,15 @@ return;
 // sets address register to NNN
 void Chip8::opcodeANNN() {
 
-    I = NNN_address;
+    I_register = get_NNN();
     
 return;
 }
 
-// Jumps the address NNN + v[0]
+// Jumps the address NNN + v_register[0]
 void Chip8::opcodeBNNN() {
 
-    pc = v[0] + NNN_address;
+    program_counter = v_register[0] + get_NNN();
 
 return;
 }
@@ -228,7 +220,7 @@ return;
 void Chip8::opcodeCXNN() {
 unsigned char random = std::rand() % 256;
 
-    v[X_register] = random & (opcode & 0x00FF);
+    v_register[get_X()] = random & (opcode & 0x00FF);
 
 return;
 }
@@ -245,17 +237,16 @@ unsigned char mask = 0;
 unsigned char x = 0;
 unsigned char y = 0;
 
-  
     height = 0x000F & opcode;
-    x_cord = v[X_register] % 64;
-    y_cord = v[Y_register] % 32;
+    x_cord = v_register[get_X()] % 64;
+    y_cord = v_register[get_Y()] % 32;
 
-    v[0xF] = 0;
+    v_register[0xF] = 0;
 
     for (int yline = 0; yline < height; yline++) {
         
         
-        data = memory[I + yline];
+        data = memory[I_register + yline];
         x_pixel_line = 7;
         x_pixel = 0;
 
@@ -270,7 +261,7 @@ unsigned char y = 0;
                  y = (y_cord + yline) % 32;
 
                 if (screen_data[y][x] == 1)
-                    v[0xF] = 1;
+                    v_register[0xF] = 1;
                 
                 screen_data[y][x] ^= 1;
 
@@ -287,10 +278,10 @@ return;
 void Chip8::opcodeEX9E() {
 unsigned char lowestNibble = 0;
 
-    lowestNibble = v[X_register] & 0x000F;
+    lowestNibble = v_register[get_X()] & 0xF;
     
     if (key_states[lowestNibble])
-        pc += 2;
+        program_counter += 2;
 
 return;
 }
@@ -299,11 +290,10 @@ return;
 void Chip8::opcodeEXA1() {
 unsigned char lowest_nibble = 0;
 
-    lowest_nibble = v[X_register] & 0xF;
+    lowest_nibble = v_register[get_X()] & 0xF;
     
-
     if (!key_states[lowest_nibble])
-        pc += 2;
+        program_counter += 2;
 
 return;
 }
@@ -311,7 +301,7 @@ return;
 // Sets the vX to the value of the delay timer
 void Chip8::opcodeFX07() {
 
-    v[X_register] = d_timer;
+    v_register[get_X()] = delay_timer;
    
 return;
 }
@@ -327,7 +317,7 @@ bool key_not_pressed = true;
         key_not_pressed = false;
 
     if (key_not_pressed)
-        pc -= 2;
+        program_counter -= 2;
 
 return;
 }
@@ -335,7 +325,7 @@ return;
 // sets delay timer to vX
 void Chip8::opcodeFX15() {
 
-    d_timer = v[X_register];
+    delay_timer = v_register[get_X()];
     
 return;
 }
@@ -343,30 +333,30 @@ return;
 // sets sound timer to vX
 void Chip8::opcodeFX18() {
 
-    s_timer = v[X_register];
+    sound_timer = v_register[get_X()];
     
 return;
 }
 
-// adds vX to I address.
+// adds vX to I_register address.
 void Chip8::opcodeFX1E() {
 
-    I += v[X_register];
+    I_register += v_register[get_X()];
     
 return;
 }
 
-// sets the address I to the location of sprite character vX.
+// sets the address I_register to the location of sprite character vX.
 void Chip8::opcodeFX29() {
 unsigned char nibble = 0;
 
-    nibble = v[X_register] & 0x000F;
-    I = memory[nibble * 5];
+    nibble = v_register[get_X()] & 0x000F;
+    I_register = memory[nibble * 5];
  
 return;
 }
 
-// stores the binary-coded representation of vX starting at memory location I
+// stores the binary-coded representation of vX starting at memory location I_register
 void Chip8::opcodeFX33() {
 int hundreds = 0;
 int tens = 0;
@@ -374,40 +364,40 @@ int ones = 0;
 int value = 0;
 
 
-    value = v[X_register];
+    value = v_register[get_X()];
 
     hundreds = value / 100;
     tens = (value / 10) % 10;
     ones = (value % 100) % 10;
 
-    memory[I] = hundreds;
-    memory[I + 1] = tens;
-    memory[I + 2] = ones;
+    memory[I_register] = hundreds;
+    memory[I_register + 1] = tens;
+    memory[I_register + 2] = ones;
 
 return;
 }
 
-// Stores values from v0 to vX to in memory, starting at addres I
+// Stores values from v0 to vX to in memory, starting at addres I_register
 void Chip8::opcodeFX55() {
 
 
-    for (int i = 0; i <= X_register; i++) {
-        memory[I + i] = v[i];
+    for (int i = 0; i <= get_X(); i++) {
+        memory[I_register + i] = v_register[i];
     }
 
-    I += X_register + 1;
+    I_register += get_X() + 1;
 
 
 return;
 }
 
-// Fills v0 to vX with values from memory, starting at address I
+// Fills v0 to vX with values from memory, starting at address I_register
 void Chip8::opcodeFX65() {
 
-    for (int i = 0; i <= X_register; i++)
-        v[i] = memory[I + i];
+    for (int i = 0; i <= get_X(); i++)
+        v_register[i] = memory[I_register + i];
 
-    I += X_register + 1;
+    I_register += get_X() + 1;
 
 return;
 }

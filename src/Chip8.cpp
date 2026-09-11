@@ -10,19 +10,12 @@ Chip8::Chip8() {
 
 /*
 Returns the current opcode from memory, and increments the program counter by 2.
-It also extracts the data for certain opcodes.
 Calling this again will get you the next opcode.
 */
 void Chip8::get_next_opcode() {
-unsigned short current_opcode = 0;
 
-    current_opcode = (memory[pc] << 8) | memory[pc + 1];
-    NNN_address = current_opcode & 0x0FFF;
-    X_register = (current_opcode & 0x0F00) >> 8;
-    Y_register = (current_opcode & 0x00F0) >> 4;
-
-    opcode = current_opcode;
-    pc += 2;
+    opcode = (memory[program_counter] << 8) | memory[program_counter + 1];
+    program_counter += 2;
 
 return;
 }
@@ -49,7 +42,7 @@ void Chip8::load_rom(std::string file_name) {
     file.close();
 
     for (int i = 0; i < length; i++)
-        memory[pc + i] = buffer[i];
+        memory[program_counter + i] = buffer[i];
 
     delete[] buffer;
     return;
@@ -57,21 +50,18 @@ void Chip8::load_rom(std::string file_name) {
 
 void Chip8::reset() {
 
-    pc = 0x200;
-    sp = 0;
-    d_timer = 0;
-    s_timer = 0;
+    program_counter = 0x200;
+    stack_pointer = 0;
+    delay_timer = 0;
+    sound_timer = 0;
     opcode = 0;
-    NNN_address = 0;
-    X_register = 0;
-    Y_register = 0;
 
     clear_display();
     clear_mem();
     clear_stack();
     clear_keystates();
 
-    return;
+return;
 }
 
 void Chip8::clear_display() {
@@ -125,7 +115,7 @@ unsigned char nibble = 0;
             opcode00EE();
             break;
         default:
-            pc += 2;
+            program_counter += 2;
             std::cout << "Skipping instruction 0NNN\n:";
             break;
     }
@@ -138,8 +128,7 @@ unsigned char nibble = 0;
 
     nibble = (opcode & 0x000F);
 
-    switch (nibble)
-    {
+    switch (nibble) {
     case 0x0:
         opcode8XY0();
         break;
@@ -250,6 +239,8 @@ unsigned char id_nibble = 0;
     default:
         break;
     }
+
+return;
 }
 
 unsigned char Chip8::get_pressed_key() {
@@ -267,7 +258,8 @@ return ret_value;
 void Chip8::set_key(unsigned char key, bool isSet) {
 
     key_states[key] = isSet;
-    return;
+
+return;
 }
 
 void Chip8::execute_op() {
@@ -330,7 +322,7 @@ void Chip8::execute_op() {
         break;
     }
 
-    return;
+return;
 }
 
 void Chip8::run() {
@@ -343,11 +335,11 @@ return;
 
 void Chip8::decrease_timers() {
 
-    if (d_timer > 0)
-        d_timer--;
+    if (delay_timer > 0)
+        delay_timer--;
 
-    if (s_timer > 0)
-        s_timer--;
+    if (sound_timer > 0)
+        sound_timer--;
 
 return;
 }

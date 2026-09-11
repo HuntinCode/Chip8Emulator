@@ -19,7 +19,7 @@ SDL_FRect rect;
 
     for (int y = 0; y < SCREEN_LENGTH; y++)
         for (int x = 0; x < SCREEN_WIDTH; x++)
-             if (cpu->screen_data[y][x] == 1) {
+             if (cpu->get_screen_data()[y][x] == 1) {
                 rect.x = x * scaler;
                 rect.y = y * scaler;
                 SDL_RenderFillRect(renderer, &rect);
